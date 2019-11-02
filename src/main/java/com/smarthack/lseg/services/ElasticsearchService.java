@@ -78,11 +78,14 @@ public class ElasticsearchService {
     }
 
 
-    public void insertRedditNews(String title, Long createdDate) {
+    public void insertRedditNews(String title, Long createdDate, String subreddit, Long ups, Long downs) {
         try {
             Map<String, Object> map = new HashMap<>();
             map.put("title", title);
             map.put("createdDate", createdDate);
+            map.put("subreddit", subreddit);
+            map.put("ups", ups);
+            map.put("downs", downs);
             map.put("timestamp", System.currentTimeMillis());
             IndexRequest request = new IndexRequest("reddit_news", "reddit").source(map);
             IndexResponse indexResponse = client.index(request);

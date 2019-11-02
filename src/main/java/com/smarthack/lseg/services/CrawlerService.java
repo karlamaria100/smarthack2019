@@ -48,18 +48,23 @@ public class CrawlerService {
             System.out.println(jsonObject);
             JSONArray results = jsonObject.getJSONObject("data").getJSONArray("children");
             for(int i = 0; i < results.length(); i++){
+                //check if the article already exists in elasticsearch
                 insertRedditResults(results.getJSONObject(i));
+                //call azure api
             }
-
-
-
         }catch (Exception e){
             e.printStackTrace();
         }
     }
 
     public void insertRedditResults(JSONObject result){
-        elasticsearchService.insertRedditNews(result.getString("title"), result.getLong("createDate"));
+        JSONObject data = result.getJSONObject("data");
+        elasticsearchService.insertRedditNews(data.getString("title"),
+                data.getLong("createDate"),
+                data.getString("subreddit"),
+                data.getLong("ups"),
+                data.getLong("downs")
+                );
     }
 
 
