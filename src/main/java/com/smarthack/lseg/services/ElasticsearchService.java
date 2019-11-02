@@ -7,9 +7,20 @@ import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
 import org.elasticsearch.action.admin.indices.get.GetIndexRequest;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.index.IndexResponse;
+import org.elasticsearch.action.search.SearchRequest;
+import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.action.search.SearchType;
+import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestClientBuilder;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.client.indices.PutMappingRequest;
+import org.elasticsearch.common.xcontent.XContentType;
+import org.elasticsearch.index.query.QueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.elasticsearch.search.sort.SortOrder;
+import org.json.JSONArray;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -18,6 +29,7 @@ import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -77,16 +89,45 @@ public class ElasticsearchService {
         }
     }
 
+    public boolean newsExists(String id){
+        QueryBuilder query = QueryBuilders.termQuery("id", id);
+        try {
+            SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
+            sourceBuilder.explain(true).size(1).query(query);
 
-    public void insertRedditNews(String title, Long createdDate, String subreddit, Long ups, Long downs) {
+            SearchRequest request = new SearchRequest("reddit_news");
+            request.searchType(SearchType.DFS_QUERY_THEN_FETCH);
+            request.source(sourceBuilder);
+
+            SearchResponse searchResponse = client.search(request);
+            return searchResponse.getHits().totalHits > 0;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+
+    public void insertRedditNews(String title, Long createdDate, String subreddit, Long ups,
+                                 Long downs, String id, String author, String subreddit_id,
+                                 String permalink, JSONArray link_flair_richtext, String url) {
         try {
             Map<String, Object> map = new HashMap<>();
             map.put("title", title);
-            map.put("createdDate", createdDate);
+            map.put("created", createdDate);
             map.put("subreddit", subreddit);
             map.put("ups", ups);
             map.put("downs", downs);
+            map.put("id", id);
+            map.put("author", author);
+            map.put("subreddit_id", subreddit_id);
+            map.put("link_flair_richtext", link_flair_richtext.toString());
+            map.put("url", url);
+            map.put("permalink", permalink);
             map.put("timestamp", System.currentTimeMillis());
+//            PutMappingRequest request = new PutMappingRequest("reddit_news");
+//            request.source(map);
+//            client.indices().putMapping(request, RequestOptions.DEFAULT);
             IndexRequest request = new IndexRequest("reddit_news", "reddit").source(map);
             IndexResponse indexResponse = client.index(request);
         } catch (ElasticsearchException e){

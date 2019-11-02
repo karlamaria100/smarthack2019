@@ -1,5 +1,7 @@
 package com.smarthack.lseg.services;
 
+import com.smarthack.lseg.utils.Helpers;
+import lombok.experimental.Helper;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -36,6 +38,9 @@ public class CrawlerService {
     @Autowired
     private ElasticsearchService elasticsearchService;
 
+    @Autowired
+    private CognitiveAzureService cognitiveAzureService;
+
     public void crawlByText(String text){
         try {
 
@@ -44,54 +49,35 @@ public class CrawlerService {
             // get also the comments link
             // put the comments throught the azure api
             // save the results from that into the elasticsearch database
-            JSONObject jsonObject = makeGetRequest(reddit + "?q=" + URLEncoder.encode(text,"UTF-8"), null);
+            JSONObject jsonObject = Helpers.makeGetRequest(reddit + "?q=" + URLEncoder.encode(text,"UTF-8"), null, null);
             System.out.println(jsonObject);
             JSONArray results = jsonObject.getJSONObject("data").getJSONArray("children");
             for(int i = 0; i < results.length(); i++){
-                //check if the article already exists in elasticsearch
                 insertRedditResults(results.getJSONObject(i));
-                //call azure api
+                getCognitiveResult();
             }
         }catch (Exception e){
             e.printStackTrace();
         }
     }
 
+    private void getCognitiveResult() {
+        cognitiveAzureService.getTextSentiment();
+    }
+
     public void insertRedditResults(JSONObject result){
         JSONObject data = result.getJSONObject("data");
-        elasticsearchService.insertRedditNews(data.getString("title"),
-                data.getLong("createDate"),
-                data.getString("subreddit"),
-                data.getLong("ups"),
-                data.getLong("downs")
-                );
+        if(!elasticsearchService.newsExists(data.getString("id")))
+            elasticsearchService.insertRedditNews(data.getString("title"),
+                    data.getLong("created"),
+                    data.getString("subreddit"),
+                    data.getLong("downs"),
+                    data.getLong("ups"),
+                    data.getString("id"),
+                    data.getString("author"),
+                    data.getString("subreddit_id"),
+                    data.getString("permalink"),
+                    data.getJSONArray("link_flair_richtext"),
+                    data.getString("url"));
     }
-
-
-    public static JSONObject makeGetRequest(String apiUrl, String bearer) throws IOException{
-        HttpClient httpclient = HttpClients.createDefault();
-        HttpGet httpget = new HttpGet(apiUrl);
-
-        if (Optional.ofNullable(bearer).isPresent())
-            httpget.setHeader("Authorization", "Bearer " + bearer);
-        httpget.setHeader("User-agent", "myuseragent_hope it work ");
-
-        HttpResponse response = httpclient.execute(httpget);
-        HttpEntity entity = response.getEntity();
-
-        if (response.getStatusLine().getStatusCode() == 200) {
-            if (entity != null) {
-                try (InputStream instream = entity.getContent()) {
-                    ByteArrayOutputStream writer = new ByteArrayOutputStream();
-                    IOUtils.copy(instream, writer);
-                    return new JSONObject(writer.toString());
-                } catch (Exception e) {
-                    return new JSONObject();
-                }
-            }
-        } else {
-        }
-        return new JSONObject();
-    }
-
 }
