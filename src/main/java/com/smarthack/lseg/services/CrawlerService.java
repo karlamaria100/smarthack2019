@@ -28,14 +28,20 @@ public class CrawlerService {
 
 
     public void crawlByText(String text){
+        try {
 
-        // todo make api call with the text to the link
-        // parse all the results
-        // get also the comments link
-        // put the comments throught the azure api
-        // save the results from that into the elasticsearch database
+            // todo make api call with the text to the link
+            // parse all the results
+            // get also the comments link
+            // put the comments throught the azure api
+            // save the results from that into the elasticsearch database
+            JSONObject jsonObject = makeGetRequest(redit + "?q=" + text, null);
+            System.out.println(jsonObject);
 
 
+        }catch (Exception e){
+            e.printStackTrace();
+        }
     }
 
 
