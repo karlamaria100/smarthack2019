@@ -8,6 +8,7 @@ import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.http.message.BasicNameValuePair;
 import org.apache.tomcat.util.http.fileupload.IOUtils;
 import org.json.JSONObject;
 
@@ -15,8 +16,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * Created by karla on 02/11/2019
@@ -49,12 +49,18 @@ public class Helpers {
     }
 
 
-    public static JSONObject makePOSTRequest(String apiUrl, List<NameValuePair> params, String headerText, String headerValue) throws IOException {
+    public static JSONObject makePOSTRequest(String apiUrl, Map<String, Object> params, String headerText, String headerValue) throws IOException {
 
         HttpClient httpclient = HttpClients.createDefault();
         HttpPost httppost = new HttpPost(apiUrl);
 
-        httppost.setEntity(new UrlEncodedFormEntity(params, "UTF-8"));
+        List<NameValuePair> nvps = new ArrayList<NameValuePair>();
+        Set<String> keySet = params.keySet();
+        for (String key : keySet) {
+            Object object = params.get(key);
+            nvps.add(new BasicNameValuePair(key, object==null?null:object.toString()));
+        }
+        httppost.setEntity(new UrlEncodedFormEntity(nvps, "UTF-8"));
         if (Optional.ofNullable(headerText).isPresent())
             httppost.setHeader(headerText, headerValue);
 

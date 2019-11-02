@@ -23,13 +23,9 @@ public class CognitiveAzureService {
 
     private String azureCognitiveKey = "02360bdc7e92455b918d21f6605287ef";
 
-    public void getTextSentiment(){
+    public JSONObject getTextSentiment(Map<String, Object> map){
         try {
-            Map<String, Object> map = new HashMap<>();
-            List<Map> document = new ArrayList<>();
-            map.put("documents", map);
-            JSONObject object = Helpers.makePOSTRequest(azureCognitive + "/text/analytics/v2.1/sentiment?showStats=true", pair,"Ocp-Apim-Subscription-Key", azureCognitiveKey);
-            System.out.println(object);
+            return Helpers.makePOSTRequest(azureCognitive + "/text/analytics/v2.1/sentiment?showStats=true", map,"Ocp-Apim-Subscription-Key", azureCognitiveKey);
         }catch (Exception e){
             e.printStackTrace();
         }

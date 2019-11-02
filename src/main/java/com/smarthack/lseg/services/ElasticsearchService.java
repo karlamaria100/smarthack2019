@@ -108,26 +108,21 @@ public class ElasticsearchService {
     }
 
 
-    public void insertRedditNews(String title, Long createdDate, String subreddit, Long ups,
-                                 Long downs, String id, String author, String subreddit_id,
-                                 String permalink, JSONArray link_flair_richtext, String url) {
+    public void insertRedditNews(String title, Long createdDate, String subreddit, String parentId, Long score,
+                                 String id, String author, String subreddit_id,
+                                 String selftext) {
         try {
             Map<String, Object> map = new HashMap<>();
             map.put("title", title);
             map.put("created", createdDate);
             map.put("subreddit", subreddit);
-            map.put("ups", ups);
-            map.put("downs", downs);
+            map.put("parent_id", parentId);
+            map.put("score", score);
             map.put("id", id);
             map.put("author", author);
             map.put("subreddit_id", subreddit_id);
-            map.put("link_flair_richtext", link_flair_richtext.toString());
-            map.put("url", url);
-            map.put("permalink", permalink);
+            map.put("selftext", selftext);
             map.put("timestamp", System.currentTimeMillis());
-//            PutMappingRequest request = new PutMappingRequest("reddit_news");
-//            request.source(map);
-//            client.indices().putMapping(request, RequestOptions.DEFAULT);
             IndexRequest request = new IndexRequest("reddit_news", "reddit").source(map);
             IndexResponse indexResponse = client.index(request);
         } catch (ElasticsearchException e){
