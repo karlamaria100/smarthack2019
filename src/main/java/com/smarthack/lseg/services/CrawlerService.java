@@ -11,9 +11,7 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.apache.http.impl.client.HttpClients;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.StringWriter;
+import java.io.*;
 import java.util.Optional;
 
 /**
@@ -54,9 +52,9 @@ public class CrawlerService {
         if (response.getStatusLine().getStatusCode() == 200) {
             if (entity != null) {
                 try (InputStream instream = entity.getContent()) {
-                    StringWriter writer = new StringWriter();
-                    IOUtils.copy(instream, writer, "UTF-8");
-                    return new JSONObject(writer.toString());
+                    ByteArrayOutputStream writer = new ByteArrayOutputStream();
+                    IOUtils.copy(instream, writer);
+                    return new JSONObject(writer.toByteArray());
                 } catch (Exception e) {
                     return new JSONObject();
                 }
